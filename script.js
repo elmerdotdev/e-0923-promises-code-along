@@ -1,62 +1,43 @@
-let products = []
-
-// THEN/CATCH ==================================================
-
-// const fetchProducts = fetch('https://jsonplaceholder.typicode.com/todos') // promise
-// fetchProducts.then(response => {
-//   return response.json() // another promise
-// }).then(data => {
-//   console.log('THEN/CATCH Method:', data) // object
-// }).catch ((error) => {
-//   console.log('ERROR', error)
-// })
-
-// ASYNC/AWAIT ==================================================
+const fetchUsers = async () => {
+  const response = await fetch('https://dummyjson.com/users?limit=5')
+  const data = await response.json()
+  return data.users
+}
 
 const fetchUserPosts = async (id) => {
-  const response = await fetch(`https://dummyjson.com/posts/user/${id}`)
-  const data = await response.json()
-  console.log(data.posts[0].title)
-  return `<li>${data.posts[0].title}></li>`
+  const response = await fetch(`https://dummyjson.com/posts/user/${id}`);
+  const data = await response.json();
+  return data.posts;
+};
+
+const buildTable = async () => {
+  const users = await fetchUsers()
+  const postsByUsers = users.map(user => fetchUserPosts(user.id)); // loop through all users and fetch posts by user id into new array
+  const postsPromiseResult = await Promise.all(postsByUsers); // wait for map to finish and store all users posts array into one array
+
+  let tableRows = ""
+
+  users.forEach((item, index) => {
+
+    const posts = postsPromiseResult[index].map(post => `<li>${post.title}</li>`).join(''); // loop through user post array and return an <li>
+
+    tableRows += `
+      <tr class="row">
+        <td>${item.id}</td>
+        <td>${item.firstName} ${item.lastName}</td>
+        <td>${item.address.address}, ${item.address.city}, ${item.address.postalCode}</td>
+        <td><a href="mailto:${item.email}">${item.email}</a></td>
+        <td><a href="tel:${item.phone}">${item.phone}</a></td>
+        <td><img src="${item.image}" width="70" /></td>
+        <td>
+          <ul>${posts}</ul>
+        </td>
+      </tr>
+    `
+
+  });
+
+  document.querySelector('.tableBody').innerHTML = tableRows; // insert rows into table element
 }
 
-const fetchProductsAsync = async () => {
-  try {
-    const response = await fetch('https://dummyjson.com/users?limit=5') // promise
-    const data = await response.json() // another promise
-    console.log('ASYNC/AWAIT Method:', data) // object
-
-    let tableRows = ""
-    data.users.forEach(item => {
-      // Every time this loops, a row is added to tableRows
-      tableRows += `
-        <tr class="row">
-          <td>${item.id}</td>
-          <td>${item.firstName} ${item.lastName}</td>
-          <td>${item.address.address}, ${item.address.city}, ${item.address.postalCode}</td>
-          <td><a href="mailto:${item.email}">${item.email}</a></td>
-          <td><a href="tel:${item.phone}">${item.phone}</a></td>
-          <td><img src="${item.image}" width="70" /></td>
-        </tr>
-      `
-    })
-    document.querySelector('.tableBody').innerHTML = tableRows
-  
-  } catch (error) {
-    console.log('ERROR', error)
-  }
-}
-
-fetchProductsAsync()
-
-
-// ASYNC/AWAIT
-const fetchData = async () => {
-  const res = await fetch('https://dummyjson.com/products')
-  const data = await res.json()
-  console.log(data)
-}
-fetchData()
-
-// THEN/CATCH
-fetch('https://dummyjson.com/products').then(res => res.json()).then(data => console.log(data))
+buildTable()
